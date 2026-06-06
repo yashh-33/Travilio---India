@@ -16,7 +16,8 @@ router.get('/', async (req, res) => {
     if (isMongo) {
       let query = {};
       if (search) {
-        const searchRegex = new RegExp(search, 'i');
+        const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const searchRegex = new RegExp(escapedSearch, 'i');
         query = {
           $or: [
             { name: searchRegex },

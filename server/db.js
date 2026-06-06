@@ -81,7 +81,9 @@ class FileDatabase {
     const dests = this.readCollection(DESTINATIONS_FILE);
     if (!search) return dests;
 
-    const regex = new RegExp(search, 'i');
+    // Escape special regex characters to prevent syntax crashes
+    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedSearch, 'i');
     return dests.filter(d => 
       regex.test(d.name) || 
       regex.test(d.state) || 

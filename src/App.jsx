@@ -324,6 +324,26 @@ export default function App() {
                 />
               </div>
 
+              {/* Premium Advertiser / Sponsor Placement Slot */}
+              <div className="glass-card animate-slide no-print" style={{ padding: '20px', border: '1px dashed var(--primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', width: '100%' }}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ background: 'var(--primary-glow)', padding: '10px', borderRadius: '10px', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Sparkles size={20} className="pulse-badge" />
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '0.92rem', fontWeight: '800' }}>Featured Partner Sponsor Placement</h4>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Are you a hotel owner, local guide, or travel agency? Advertise with Travilio to reach thousands of monthly travelers.</span>
+                  </div>
+                </div>
+                <a 
+                  href="mailto:sponsor@travilio.com?subject=Travilio Advertising Inquiry"
+                  className="nav-tab"
+                  style={{ background: 'var(--primary)', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', textDecoration: 'none', borderRadius: '8px' }}
+                >
+                  Contact For Sponsorship
+                </a>
+              </div>
+
               <div id="itinerary-section" className="centered-section animate-slide" style={{ scrollMarginTop: '100px' }}>
                 <h2 style={{ fontSize: '1.75rem', marginBottom: '24px', borderBottom: '1px solid var(--border-glow)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Calendar style={{ color: 'var(--accent-gold)' }} /> 2. Personal Day-by-Day Itinerary
@@ -464,8 +484,13 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="no-print" style={{ marginTop: 'auto', padding: '30px', borderTop: '1px solid var(--border-glow)', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)' }}>
+      <footer className="no-print" style={{ marginTop: 'auto', padding: '30px', borderTop: '1px solid var(--border-glow)', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
         <p>© 2026 Travilio Trip Planner. Crafted with premium Blocksy Travel styling &amp; custom variables.</p>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <a href="/privacy-policy.html" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontWeight: '500' }} target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+          <span>|</span>
+          <a href="/terms.html" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontWeight: '500' }} target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a>
+        </div>
       </footer>
 
     </div>
