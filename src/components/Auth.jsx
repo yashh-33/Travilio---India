@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Mail, Lock, User, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function Auth({ onAuthSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,8 +16,8 @@ export default function Auth({ onAuthSuccess }) {
     setLoading(true);
 
     const url = isLogin 
-      ? 'http://localhost:5000/api/auth/login' 
-      : 'http://localhost:5000/api/auth/register';
+      ? `${API_URL}/api/auth/login` 
+      : `${API_URL}/api/auth/register`;
     
     const body = isLogin 
       ? { emailOrUsername: email || username, password }

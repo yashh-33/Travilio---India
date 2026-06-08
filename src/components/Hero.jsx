@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, IndianRupee, Calendar, Sparkles, Sun, Moon, LogOut, ArrowRight } from 'lucide-react';
 import { stateCities } from '../data/travelData';
+import { API_URL } from '../config';
 
 export default function Hero({
   originHub,
@@ -70,7 +71,7 @@ export default function Hero({
 
     if (value.trim().length > 0) {
       try {
-        const response = await fetch(`http://localhost:5000/api/destinations?search=${encodeURIComponent(value)}`);
+        const response = await fetch(`${API_URL}/api/destinations?search=${encodeURIComponent(value)}`);
         if (response.ok) {
           const list = await response.json();
           setSuggestions(list);

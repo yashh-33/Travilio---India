@@ -6,6 +6,7 @@ import ItineraryPlanner from './components/ItineraryPlanner';
 import ExploreGuide from './components/ExploreGuide';
 import PackingList from './components/PackingList';
 import Auth from './components/Auth';
+import { API_URL } from './config';
 
 export default function App() {
   const [originHub, setOriginHub] = useState('delhi');
@@ -36,7 +37,7 @@ export default function App() {
   useEffect(() => {
     const loadDestinations = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/destinations');
+        const response = await fetch(`${API_URL}/api/destinations`);
         if (response.ok) {
           const list = await response.json();
           setDestinations(list);
@@ -55,7 +56,7 @@ export default function App() {
   const loadSavedTrips = async () => {
     if (!token) return;
     try {
-      const response = await fetch('http://localhost:5000/api/trips', {
+      const response = await fetch(`${API_URL}/api/trips`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -105,7 +106,7 @@ export default function App() {
     if (e) e.stopPropagation();
     if (!token) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/trips/${tripId}`, {
+      const response = await fetch(`${API_URL}/api/trips/${tripId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
