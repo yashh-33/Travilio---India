@@ -22,8 +22,19 @@ app.use('/api/destinations', destinationRoutes);
 app.use('/api/trips', tripRoutes);
 
 // Health Check Endpoint
-app.use('/api/health', (req, res) => {
-  res.json({ status: 'ok', serverTime: new Date() });
+// Root Route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Travilio Backend Running 🚀'
+  });
+});
+
+// Health Check Endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    serverTime: new Date()
+  });
 });
 
 // Load original data file
