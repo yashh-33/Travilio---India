@@ -123,12 +123,7 @@ export default function Hero({
               style={{ 
                 width: '80px', 
                 height: '80px', 
-                objectFit: 'contain',
-                borderRadius: '14px',
-                border: '1px solid var(--border-glow)',
-                background: 'white',
-                padding: '4px',
-                boxShadow: 'var(--shadow-lg)'
+                objectFit: 'contain'
               }} 
             />
             <div>
