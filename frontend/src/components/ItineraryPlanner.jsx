@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Printer, Copy, CheckCircle, Clock, AlertCircle, Sparkles, Plus, Trash2, IndianRupee, Save } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function ItineraryPlanner({ originHub, originCity, destination, budget, duration, favorites, token, onTripSaved }) {
   const [customActivities, setCustomActivities] = useState({});
@@ -115,7 +116,7 @@ export default function ItineraryPlanner({ originHub, originCity, destination, b
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/trips', {
+      const response = await fetch(`${API_URL}/api/trips`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
