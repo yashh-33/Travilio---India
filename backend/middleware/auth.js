@@ -17,7 +17,7 @@ const authMiddleware = (req, res, next) => {
   const token = parts[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'travilio_premium_signature_key_2026');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'travilio_production_secure_signing_key_2026');
     req.user = decoded;
     next();
   } catch (err) {
