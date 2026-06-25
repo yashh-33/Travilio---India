@@ -1,37 +1,49 @@
 import { getDestinationById } from './destinationService.js';
 import { calculateBudgetBreakdown } from './budgetCalculatorService.js';
 import { recommendHotel } from './hotelRecommendationService.js';
+import { calculateTravelDetails } from '../utils/travelEngine.js';
 
-/**
- * Orchestrates creating a complete, structured travel itinerary.
- * @param {string} sourceCity - E.g. 'Nagpur' or 'Delhi'
- * @param {string} destinationId - E.g. 'goa' or 'kamptee'
- * @param {string} budgetTier - 'budget', 'midRange', or 'luxury'
- * @param {number} duration - Number of days for the trip (e.g., 3, 5, 7)
- * @param {string} transportMode - 'flight', 'train', 'bus', or 'cab'
- */
 export const createTripPlan = async (sourceCity, destinationId, budgetTier, duration, transportMode) => {
   // 1. Resolve destination profile (seeded or dynamically generated)
   const destination = await getDestinationById(destinationId);
   
-  // 2. Compute budget details and connection layovers
+  // 2. Compute budget details
   const budgetBreakdown = calculateBudgetBreakdown(destination, sourceCity, budgetTier, duration, transportMode);
   
   // 3. Select hotel package
   const hotelRec = recommendHotel(destination, budgetTier);
 
   // 4. Transport details
-  const startHub = budgetBreakdown.startingHub;
   const transport = (transportMode || 'train').toLowerCase().trim();
-  const baseRoute = destination.routes?.[startHub]?.[transport] || { duration: '12h', details: 'Express connectivity' };
+  
+  // Get dynamic travel details from Travel Engine
+  let travelDetails;
+  try {
+    travelDetails = calculateTravelDetails(sourceCity, '', destination.name, destination.state);
+  } catch (err) {
+    travelDetails = {
+      distance: 1000,
+      train: { duration: '14h 20m', availability: 'Daily', confidenceScore: 'High', details: 'Accurate live pricing is currently unavailable. Showing estimated fares based on recent Indian travel trends.' },
+      flight: { duration: '2h 15m', availability: 'Daily', confidenceScore: 'High', details: 'Accurate live pricing is currently unavailable. Showing estimated fares based on recent Indian travel trends.' },
+      bus: { duration: '20h 00m', availability: 'Daily', confidenceScore: 'High', details: 'Accurate live pricing is currently unavailable. Showing estimated fares based on recent Indian travel trends.' },
+      cab: { duration: '16h 00m', availability: 'Daily', confidenceScore: 'High', details: 'Accurate live pricing is currently unavailable. Showing estimated fares based on recent Indian travel trends.' },
+      recommendation: { mode: 'train', reason: 'Comfortable rail transit recommended.' }
+    };
+  }
+  
+  const baseRoute = travelDetails[transport] || travelDetails['train'];
   
   const transportRecommendation = {
     mode: transportMode,
     price: budgetBreakdown.transportCost,
     duration: baseRoute.duration,
-    details: budgetBreakdown.layoverFee > 0 
-      ? `Connecting ${transport} via ${startHub.toUpperCase()} Hub. Includes local connection fee of ₹${budgetBreakdown.layoverFee}.`
-      : baseRoute.details
+    distance: travelDetails.distance,
+    availability: baseRoute.availability,
+    confidenceScore: baseRoute.confidenceScore,
+    details: baseRoute.details,
+    pros: baseRoute.pros || [],
+    cons: baseRoute.cons || [],
+    recommendation: travelDetails.recommendation
   };
 
   // 5. Structure Day-by-day itinerary
@@ -45,10 +57,9 @@ export const createTripPlan = async (sourceCity, destinationId, budgetTier, dura
     const dailyActivities = [];
     
     if (day === 1) {
-      // Day 1: Arrival & check-in + easy evening walk
       dailyActivities.push({
         time: 'Morning / Afternoon',
-        activity: `Arrive at ${destination.name}. Check-in at ${hotelRec.name}.`,
+        activity: `Arrive at ${destination.name} via ${transport.toUpperCase()}. Check-in at ${hotelRec.name}.`,
         cost: 0
       });
       if (attractionsList.length > 0) {
@@ -58,7 +69,6 @@ export const createTripPlan = async (sourceCity, destinationId, budgetTier, dura
           cost: attractionsList[0].entryFee || 0
         });
       }
-      // Dinner recommendation
       const dinnerPlace = diningList[0] || { name: 'Local street food joints', cost: 150 };
       dailyActivities.push({
         time: '7:30 PM',
@@ -67,7 +77,6 @@ export const createTripPlan = async (sourceCity, destinationId, budgetTier, dura
       });
 
     } else if (day === duration) {
-      // Last Day: Local market shopping + checkout & departure
       const lastAttraction = attractionsList.length > 1 ? attractionsList[attractionsList.length - 1] : { name: 'Local craft market', entryFee: 0, description: 'Great for souvenirs' };
       dailyActivities.push({
         time: '9:30 AM',
@@ -81,7 +90,6 @@ export const createTripPlan = async (sourceCity, destinationId, budgetTier, dura
       });
 
     } else {
-      // Mid-trip days: Heavy sightseeing and adventures
       const attractionIndex = (day - 2) % attractionsList.length;
       const adventureIndex = (day - 2) % adventuresList.length;
       

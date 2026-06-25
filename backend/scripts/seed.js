@@ -1,5 +1,12 @@
 import pool from '../config/supabase.js';
 import dotenv from 'dotenv';
+import { 
+  resolveDestinationImages, 
+  resolveAttractionImages, 
+  resolveFoodImage, 
+  resolveShoppingImages, 
+  resolveFestivalImages 
+} from '../utils/imageLibrary.js';
 
 dotenv.config();
 
@@ -1049,131 +1056,138 @@ const buildDestinationProfile = (row) => {
 
   // Accommodations packages mapping
   const hotels = {
-    budget: { name: `${d.name} Backpackers Lodge`, price: 600, highlights: ['Clean dorm beds', 'Friendly local guide host', 'Free high-speed WiFi'] },
-    midRange: { name: `Hotel ${d.name} Residency`, price: 2800, highlights: ['Spacious AC rooms', 'Complimentary buffet breakfast', 'Near transit terminals'] },
-    luxury: { name: `The Royal Palace ${d.name}`, price: 8500, highlights: ['Sprawling heritage garden estate', 'In-house luxury spa & pool', 'Fine-dining multi-cuisine restaurant'] }
+    budget: { name: `${d.name} Backpackers Lodge`, price: 800, highlights: ['Clean dorm beds', 'Friendly local guide host', 'Free high-speed WiFi'] },
+    midRange: { name: `Hotel ${d.name} Residency`, price: 3000, highlights: ['Spacious AC rooms', 'Complimentary buffet breakfast', 'Near transit terminals'] },
+    luxury: { name: `The Royal Palace ${d.name}`, price: 12000, highlights: ['Sprawling heritage garden estate', 'In-house luxury spa & pool', 'Fine-dining multi-cuisine restaurant'] }
   };
 
-  // State-specific traditional dining options
-  const foods = STATE_FOODS[d.state] || { street: 'Street Food Junction', thali: 'Traditional Regional Thali', premium: 'The Grand Royal Restaurant' };
   const dining = [
-    { name: `Street Food Junction (${d.name})`, specialty: foods.street, type: 'Street Food', cost: 150 },
-    { name: `${d.name} Heritage Diner`, specialty: foods.thali, type: 'Mid-Range', cost: 600 },
-    { name: `The Grand Royal Restaurant`, specialty: foods.premium, type: 'Fine Dining', cost: 1500 }
+    { name: `Street Food Junction (${d.name})`, specialty: 'Local Savoury Chaat & Sweets', type: 'Street Food', cost: 150 },
+    { name: `${d.name} Heritage Diner`, specialty: 'Traditional Regional Thali', type: 'Mid-Range', cost: 600 },
+    { name: `The Grand Royal Restaurant`, specialty: 'Premium Indian & Mughal Fusion', type: 'Fine Dining', cost: 1500 }
   ];
 
-  // Category-specific activities
-  let attractions = [];
-  let adventures = [];
+  const attractions = [
+    { name: `${d.name} Historic Temple`, entryFee: 50, duration: 2, description: `Ancient historical temple in ${d.name} showcasing gorgeous local stone architecture.` },
+    { name: `${d.name} Public Lake & Garden`, entryFee: 20, duration: 1.5, description: `A popular local scenic spot in ${d.name} perfect for evening walks and recreation.` },
+    { name: `${d.name} Heritage Market Walk`, entryFee: 0, duration: 3, description: `Stroll through the colorful local markets of ${d.name} and buy traditional handicrafts.` }
+  ];
 
-  if (d.category === 'Religious & Spiritual') {
-    attractions = [
-      { name: `${d.name} Holy Shrine`, entryFee: 0, duration: 2, description: `Ancient, highly revered historical temple in ${d.name} showcasing gorgeous architecture.` },
-      { name: `${d.name} River Ghats`, entryFee: 0, duration: 1.5, description: `Serene bathing ghats perfect for peaceful evening walks and experiencing the Ganga Aarti.` },
-      { name: `Local Heritage Market`, entryFee: 0, duration: 3, description: `Stroll through colorful local markets of ${d.name} and buy traditional puja items and crafts.` }
-    ];
-    adventures = [
-      { name: 'Spiritual Guided Walk & Aarti', cost: 200, type: 'Spiritual Walk', thrillLevel: 'Low' },
-      { name: 'Traditional Yoga Session', cost: 500, type: 'Yoga & Wellness', thrillLevel: 'Low' }
-    ];
-  } else if (d.category === 'Hill Station' || d.category === 'Adventure & Trekking') {
-    attractions = [
-      { name: `${d.name} Panoramic Viewpoint`, entryFee: 20, duration: 1.5, description: `Offers stunning 360-degree views of the surrounding snow-capped mountain ranges.` },
-      { name: `${d.name} Forest Reserves & Waterfalls`, entryFee: 50, duration: 3, description: `Scenic nature trails through pine and deodar forests leading to a dramatic waterfall.` },
-      { name: `Local Craft & Shopping Mall`, entryFee: 0, duration: 2, description: `Bustling ridge walking street with local wooden craft stalls and cozy cafes.` }
-    ];
-    adventures = [
-      { name: 'Guided Mountain Trekking', cost: 1200, type: 'Trekking', thrillLevel: 'Medium' },
-      { name: 'Tandem Paragliding Experience', cost: 3200, type: 'Aviation Sport', thrillLevel: 'High' }
-    ];
-  } else if (d.category === 'Beach & Coastal') {
-    attractions = [
-      { name: `${d.name} Golden Beach`, entryFee: 0, duration: 3, description: `Stunning sandy beach with clean waters, perfect for sunbathing and evening sunsets.` },
-      { name: `${d.name} Marine Sunset Viewpoint`, entryFee: 0, duration: 1.5, description: `Spectacular rocky cliff overlooking the ocean, famous for photography.` },
-      { name: `Portuguese Lighthouse Ruins`, entryFee: 20, duration: 2, description: `Historic lighthouse ruins offering beautiful views of the coastal line.` }
-    ];
-    adventures = [
-      { name: 'Scuba Diving & Coral Safari', cost: 2800, type: 'Water Sports', thrillLevel: 'High' },
-      { name: 'Jet Ski & Banana Boat Ride', cost: 800, type: 'Water Sports', thrillLevel: 'Medium' }
-    ];
-  } else if (d.category === 'Wildlife & Nature') {
-    attractions = [
-      { name: `${d.name} National Park Safari`, entryFee: 350, duration: 4, description: `Famed national park housing rare species of animals and birds in their native habitat.` },
-      { name: `${d.name} Nature Interpretation Center`, entryFee: 20, duration: 1.5, description: `Modern museum educating visitors on local biodiversity and ecology.` },
-      { name: `Scenic River Lake Watch`, entryFee: 50, duration: 2, description: `Quiet lake banks ideal for migratory bird watching and evening photography.` }
-    ];
-    adventures = [
-      { name: 'Jeep Tiger Safari', cost: 2500, type: 'Wildlife Safari', thrillLevel: 'High' },
-      { name: 'Nature Forest Guided Walk', cost: 600, type: 'Eco Tour', thrillLevel: 'Low' }
-    ];
-  } else {
-    attractions = [
-      { name: `${d.name} Heritage Fort`, entryFee: 100, duration: 2.5, description: `Historic fortress reflecting traditional Indian architecture, weapons, and paintings.` },
-      { name: `${d.name} Royal Gardens`, entryFee: 30, duration: 1.5, description: `Well-maintained Mughal or regional royal gardens with fountains and pavilions.` },
-      { name: `Traditional Craft Bazaars`, entryFee: 0, duration: 3, description: `Vibrant handicraft market famous for traditional textiles, jewelry, and pottery.` }
-    ];
-    adventures = [
-      { name: 'Local Heritage Guided Tour', cost: 500, type: 'Cultural Tour', thrillLevel: 'Low' },
-      { name: 'Traditional Cooking Class', cost: 1200, type: 'Culinary Class', thrillLevel: 'Medium' }
-    ];
-  }
-
-  // Set default aliases if not provided
-  const aliases = d.aliases && d.aliases.length > 0 ? d.aliases : [d.name.toLowerCase()];
+  const adventures = [
+    { name: 'Local Heritage Guided Tour', cost: 500, type: 'Cultural Tour', thrillLevel: 'Low' },
+    { name: 'Traditional Cooking Class', cost: 1200, type: 'Culinary', thrillLevel: 'Medium' }
+  ];
 
   return {
-    id: d.id,
-    name: d.name,
-    state: d.state,
-    tagline: d.tagline || `Explore the hidden beauty of ${d.name}`,
-    category: d.category,
+    ...d,
     image,
-    description: d.description || `A stunning travel destination in ${d.state}, India, offering a blend of cultural landmarks, scenic points, and historical wonders.`,
-    climate: d.climate,
-    bestTime: d.bestTime,
     routes,
     hotels,
     dining,
     attractions,
-    adventures,
-    search_aliases: aliases,
-    popularity_score: d.popularity || 50
+    adventures
   };
 };
 
+/**
+ * Programmatic enrichment function to inject real Unsplash images and details
+ */
+const enrichDestinationWithRealAssets = (dest) => {
+  const realImages = resolveDestinationImages(dest.name, dest.state, dest.category);
+  const mainImage = realImages[0] ? realImages[0].url : dest.image;
+
+  // Enrich attractions
+  const enrichedAttractions = (dest.attractions || []).map((attr, idx) => ({
+    name: attr.name,
+    description: attr.description,
+    images: resolveAttractionImages(attr.name, dest.category),
+    googleMapsUrl: `https://maps.google.com/?q=${encodeURIComponent(attr.name + ' ' + dest.name)}`,
+    entryFee: attr.entryFee !== undefined ? attr.entryFee : (idx === 0 ? 100 : idx === 1 ? 50 : 0),
+    timings: attr.timings || "9:00 AM - 6:00 PM",
+    bestTime: attr.bestTime || "October to March",
+    timeRequired: attr.timeRequired || "2 hours",
+    category: attr.category || (idx === 0 ? "Monument" : "Nature Spot")
+  }));
+
+  // Enrich food specialty
+  const enrichedDining = (dest.dining || []).map((food) => ({
+    ...food,
+    image: resolveFoodImage(food.name),
+    description: food.description || `Famous regional food specialty: ${food.specialty}.`
+  }));
+
+  // Generate shopping
+  const marketNames = [`${dest.name} Local Bazaar`, `${dest.name} Traditional Market`];
+  const shopping = marketNames.map((mName) => ({
+    name: mName,
+    description: `A bustling local market in ${dest.name} famous for traditional textiles, spices, and authentic local handicrafts.`,
+    images: resolveShoppingImages(mName),
+    googleMapsUrl: `https://maps.google.com/?q=${encodeURIComponent(mName + ' ' + dest.name)}`
+  }));
+
+  // Generate festivals
+  const festNames = [`${dest.name} Cultural Utsav`, `${dest.name} Seasonal Festival`];
+  const festivals = festNames.map((fName, idx) => ({
+    name: fName,
+    description: `An annual celebration in ${dest.name} bringing together local folk musicians, artists, and culinary experts.`,
+    month: idx === 0 ? "October" : "March",
+    images: [resolveFestivalImages(fName)]
+  }));
+
+  return {
+    ...dest,
+    image: mainImage,
+    images: realImages,
+    attractions: enrichedAttractions,
+    dining: enrichedDining,
+    shopping,
+    festivals
+  };
+};
+
+/**
+ * Seeding Transaction Core
+ */
 const seedDB = async () => {
   try {
-    console.log('PostgreSQL Seeder Audit Starting (200+ Destinations Upgrade)...');
-    
-    // 1. Clear existing records in child-to-parent order
-    console.log('Clearing old database records...');
+    console.log('Testing Supabase pool connection before seeding...');
+    const connCheck = await pool.query('SELECT NOW()');
+    console.log(`Connection verified: ${connCheck.rows[0].now}`);
+
+    console.log('Running database migrations to add dynamic columns...');
+    await pool.query(`
+      ALTER TABLE destinations ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]';
+      ALTER TABLE destinations ADD COLUMN IF NOT EXISTS shopping JSONB DEFAULT '[]';
+      ALTER TABLE destinations ADD COLUMN IF NOT EXISTS festivals JSONB DEFAULT '[]';
+    `);
+    console.log('Database migrations completed.');
+
+    console.log('Clearing database tables...');
     await pool.query('DELETE FROM saved_trips');
     await pool.query('DELETE FROM destinations');
     console.log('Database cleared.');
 
-    // 2. Map generated profiles for the compact list
     console.log(`Generating travel profiles for ${compactDestinations.length} compact destinations...`);
     const generatedDestinations = compactDestinations.map(buildDestinationProfile);
 
-    // 3. Merge BOTH arrays into the final consolidated seeding array
-    const allDestinations = [
+    // Consolidated seeding array
+    const rawDestinations = [
       ...premiumDestinations,
       ...generatedDestinations
     ];
 
-    // Audit Logging
+    console.log(`Enriching ${rawDestinations.length} destinations with high-quality Unsplash assets...`);
+    const allDestinations = rawDestinations.map(enrichDestinationWithRealAssets);
+
     console.log('--- DATABASE SEED AUDIT REPORT ---');
-    console.log(`* premiumDestinations count   : ${premiumDestinations.length}`);
-    console.log(`* compactDestinations count   : ${compactDestinations.length}`);
-    console.log(`* generatedDestinations count : ${generatedDestinations.length}`);
-    console.log(`* final allDestinations count : ${allDestinations.length}`);
+    console.log(`* Consolidated destinations count: ${allDestinations.length}`);
+    console.log(`* Target columns added: images, shopping, festivals`);
     console.log('----------------------------------');
 
     console.log(`Ready to seed ${allDestinations.length} total destinations into PostgreSQL...`);
 
     let insertedCount = 0;
 
-    // 4. Loop and insert all consolidated destinations directly
     for (const destination of allDestinations) {
       const destQuery = `
         INSERT INTO destinations (
@@ -1192,9 +1206,12 @@ const seedDB = async () => {
           attractions, 
           adventures,
           search_aliases,
-          popularity_score
+          popularity_score,
+          images,
+          shopping,
+          festivals
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       `;
 
       const aliases = destination.search_aliases || destination.aliases || [destination.name.toLowerCase()];
@@ -1215,8 +1232,11 @@ const seedDB = async () => {
         JSON.stringify(destination.dining || []),
         JSON.stringify(destination.attractions || []),
         JSON.stringify(destination.adventures || []),
-        aliases, // mapped directly as TEXT[]
-        popularity
+        aliases,
+        popularity,
+        JSON.stringify(destination.images || []),
+        JSON.stringify(destination.shopping || []),
+        JSON.stringify(destination.festivals || [])
       ]);
       insertedCount++;
     }

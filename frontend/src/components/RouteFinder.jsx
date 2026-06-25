@@ -89,19 +89,16 @@ export default function RouteFinder({ originHub, originCity, destination, budget
   };
 
   const getBookingUrl = (modeId) => {
-    const originName = originCity.split(' ')[0];
-    const destName = destination.name;
-    
     switch(modeId) {
       case 'flight':
-        return `https://www.makemytrip.com/flight/search?tripType=O&itinerary=${originName}-${destName}-01/07/2026&paxType=A-1_C-0_I-0&intl=false&cabinClass=E`;
+        return 'https://www.makemytrip.com/flights/';
       case 'train':
-        return `https://www.confirmtkt.com/rly-search?from=${originName}&to=${destName}`;
+        return 'https://www.irctc.co.in/';
       case 'bus':
-        return `https://www.redbus.in/bus-tickets/${originName.toLowerCase()}-to-${destName.toLowerCase()}`;
+        return 'https://www.redbus.in/';
       case 'cab':
       default:
-        return `https://www.makemytrip.com/cabs/`;
+        return 'https://www.makemytrip.com/cabs/';
     }
   };
 
@@ -292,7 +289,7 @@ export default function RouteFinder({ originHub, originCity, destination, budget
                     marginTop: '5px'
                   }}
                 >
-                  Book on External site
+                  {mode.id === 'flight' ? 'Book Flight' : mode.id === 'train' ? 'Book Train' : mode.id === 'bus' ? 'Book Bus' : 'Book Cab'}
                   <ArrowUpRight size={14} style={{ marginLeft: '4px' }} />
                 </a>
               )}

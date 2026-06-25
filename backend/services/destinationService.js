@@ -1,4 +1,35 @@
 import pool from '../config/supabase.js';
+import { calculateTravelDetails } from '../utils/travelEngine.js';
+import { 
+  resolveDestinationImages, 
+  resolveAttractionImages, 
+  resolveFoodImage, 
+  resolveShoppingImages, 
+  resolveFestivalImages 
+} from '../utils/imageLibrary.js';
+
+/**
+ * Generates dynamic routes on-the-fly from the 4 hubs
+ */
+export const getDynamicRoutesForDestination = (destName, destState) => {
+  const hubs = ['delhi', 'mumbai', 'bengaluru', 'kolkata'];
+  const routes = {};
+  for (const hub of hubs) {
+    try {
+      const hubState = hub === 'delhi' ? 'Delhi' : hub === 'mumbai' ? 'Maharashtra' : hub === 'bengaluru' ? 'Karnataka' : 'West Bengal';
+      routes[hub] = calculateTravelDetails(hub, hubState, destName, destState);
+    } catch (err) {
+      routes[hub] = {
+        distance: 1000,
+        flight: { price: 4500, duration: '2h 15m', details: 'Accurate live pricing is currently unavailable. Showing estimated fares based on recent Indian travel trends.' },
+        train: { price: 800, duration: '18h 00m', details: 'Accurate live pricing is currently unavailable. Showing estimated fares based on recent Indian travel trends.' },
+        bus: { price: 1200, duration: '22h 00m', details: 'Accurate live pricing is currently unavailable. Showing estimated fares based on recent Indian travel trends.' },
+        cab: { price: 15000, duration: '14h 00m', details: 'Accurate live pricing is currently unavailable. Showing estimated fares based on recent Indian travel trends.' }
+      };
+    }
+  }
+  return routes;
+};
 
 /**
  * Generates a high-fidelity destination profile on-the-fly for any Indian city (fallback)
@@ -57,38 +88,50 @@ export const generateDynamicDestination = (id) => {
     { name: `The Grand Royal Restaurant`, specialty: 'Premium Indian & Mughal Fusion', type: 'Fine Dining', cost: 1500 }
   ];
 
-  const routes = {
-    delhi: {
-      flight: { price: 4500, duration: '2h 15m', details: 'Connecting flights daily to nearest airport' },
-      train: { price: 800, duration: '18h 00m', details: 'Direct / Express trains from New Delhi Station' },
-      bus: { price: 1200, duration: '22h 00m', details: 'Overnight AC Sleeper coaches' },
-      cab: { price: 15000, duration: '14h 00m', details: 'Private taxi via national highway network' }
-    },
-    mumbai: {
-      flight: { price: 4200, duration: '1h 30m', details: 'Frequent direct/connecting flights' },
-      train: { price: 700, duration: '16h 00m', details: 'Express trains from CST/Dadar' },
-      bus: { price: 1100, duration: '15h 00m', details: 'Direct AC Sleeper overnight' },
-      cab: { price: 12000, duration: '11h 00m', details: 'Private sedan via highway' }
-    },
-    bengaluru: {
-      flight: { price: 4800, duration: '1h 45m', details: 'Direct / Connecting flights' },
-      train: { price: 650, duration: '18h 00m', details: 'Daily express trains' },
-      bus: { price: 1000, duration: '16h 00m', details: 'AC Sleeper coaches' },
-      cab: { price: 13000, duration: '12h 00m', details: 'Private sedan via national highway' }
-    },
-    kolkata: {
-      flight: { price: 5800, duration: '2h 10m', details: 'Direct / Connecting flights' },
-      train: { price: 900, duration: '20h 00m', details: 'Express trains daily' },
-      bus: { price: 1800, duration: '24h 00m', details: 'Requires regional bus connections' },
-      cab: { price: 18000, duration: '16h 00m', details: 'Private highway taxi' }
-    }
-  };
+  const routes = getDynamicRoutesForDestination(name, state);
 
   const hotels = {
-    budget: { name: `${name} Backpackers Lodge`, price: 600, highlights: ['Clean dorm beds', 'Friendly local guide host', 'Free high-speed WiFi'] },
-    midRange: { name: `Hotel ${name} Residency`, price: 2800, highlights: ['Spacious AC rooms', 'Complimentary buffet breakfast', 'Near transit terminals'] },
-    luxury: { name: `The Royal Palace ${name}`, price: 8500, highlights: ['Sprawling heritage garden estate', 'In-house luxury spa & pool', 'Fine-dining multi-cuisine restaurant'] }
+    budget: { name: `${name} Backpackers Lodge`, price: 800, highlights: ['Clean dorm beds', 'Friendly local guide host', 'Free high-speed WiFi'] },
+    midRange: { name: `Hotel ${name} Residency`, price: 3000, highlights: ['Spacious AC rooms', 'Complimentary buffet breakfast', 'Near transit terminals'] },
+    luxury: { name: `The Royal Palace ${name}`, price: 12000, highlights: ['Sprawling heritage garden estate', 'In-house luxury spa & pool', 'Fine-dining multi-cuisine restaurant'] }
   };
+
+  const realImages = resolveDestinationImages(name, state, category);
+  const mainImage = realImages[0] ? realImages[0].url : image;
+  
+  const enrichedAttractions = attractions.map((attr, idx) => ({
+    name: attr.name,
+    description: attr.description,
+    images: resolveAttractionImages(attr.name, category),
+    googleMapsUrl: `https://maps.google.com/?q=${encodeURIComponent(attr.name + ' ' + name)}`,
+    entryFee: attr.entryFee !== undefined ? attr.entryFee : (idx === 0 ? 100 : 50),
+    timings: "9:00 AM - 6:00 PM",
+    bestTime: "October to March",
+    timeRequired: "2 hours",
+    category: idx === 0 ? "Monument" : "Nature Spot"
+  }));
+
+  const enrichedDining = dining.map((food) => ({
+    ...food,
+    image: resolveFoodImage(food.name),
+    description: food.description || `Famous local food specialty in ${name}: ${food.specialty}.`
+  }));
+
+  const marketNames = [`${name} Local Bazaar`, `${name} Traditional Market`];
+  const shopping = marketNames.map((mName) => ({
+    name: mName,
+    description: `A bustling local market in ${name} famous for traditional textiles, spices, and authentic local handicrafts.`,
+    images: resolveShoppingImages(mName),
+    googleMapsUrl: `https://maps.google.com/?q=${encodeURIComponent(mName + ' ' + name)}`
+  }));
+
+  const festNames = [`${name} Cultural Utsav`, `${name} Seasonal Festival`];
+  const festivals = festNames.map((fName, idx) => ({
+    name: fName,
+    description: `An annual celebration in ${name} bringing together local folk musicians, artists, and culinary experts.`,
+    month: idx === 0 ? "October" : "March",
+    images: [resolveFestivalImages(fName)]
+  }));
 
   return {
     id,
@@ -96,17 +139,20 @@ export const generateDynamicDestination = (id) => {
     state,
     tagline: `Explore the hidden beauty of ${name}`,
     category,
-    image,
+    image: mainImage,
     description: `A stunning travel destination in ${state}, India, offering a blend of cultural landmarks, scenic points, and historical wonders.`,
     climate: 'Tropical (20°C - 35°C)',
     bestTime: 'October to March',
     routes,
     hotels,
-    dining,
-    attractions,
+    dining: enrichedDining,
+    attractions: enrichedAttractions,
     adventures,
     searchAliases: [id.replace('-', ' ')],
-    popularityScore: 40
+    popularityScore: 40,
+    images: realImages,
+    shopping,
+    festivals
   };
 };
 
@@ -123,13 +169,16 @@ const mapDestinationRow = (row) => {
     description: row.description,
     climate: row.climate,
     bestTime: row.best_time,
-    routes: row.routes,
+    routes: getDynamicRoutesForDestination(row.name, row.state),
     hotels: row.hotels,
     dining: row.dining,
     attractions: row.attractions,
     adventures: row.adventures,
     searchAliases: row.search_aliases || [],
-    popularityScore: row.popularity_score || 50
+    popularityScore: row.popularity_score || 50,
+    images: row.images || [],
+    shopping: row.shopping || [],
+    festivals: row.festivals || []
   };
 };
 
@@ -143,7 +192,6 @@ export const getDestinations = async (search, state, category) => {
 
   if (search) {
     const searchTerm = `%${search.trim()}%`;
-    // Scans name, state, category, or search_aliases array (case-insensitively)
     query += ` AND (
       name ILIKE $${paramCount} OR 
       state ILIKE $${paramCount} OR 
@@ -166,13 +214,11 @@ export const getDestinations = async (search, state, category) => {
     paramCount++;
   }
 
-  // Autocomplete Ranking: Higher popularity scores are ranked first, followed by alphabetical order
   query += ' ORDER BY popularity_score DESC, name ASC';
 
   const { rows } = await pool.query(query, params);
   const dests = rows.map(mapDestinationRow);
 
-  // Dynamic Autocomplete Injector for "Every Single Place in India" (Fallback Suggestion)
   if (search && search.trim().length > 0) {
     const cleanSearch = search.trim();
     const customId = cleanSearch.toLowerCase().replace(/\s+/g, '-');
@@ -201,11 +247,9 @@ export const getDestinations = async (search, state, category) => {
  * Service to retrieve a single destination's complete details by ID
  */
 export const getDestinationById = async (id) => {
-  // Try direct ID match
   let { rows } = await pool.query('SELECT * FROM destinations WHERE id = $1 LIMIT 1', [id]);
   
   if (rows.length === 0) {
-    // Try matching by alias if ID lookup fails
     const aliasQuery = `
       SELECT * FROM destinations 
       WHERE EXISTS (SELECT 1 FROM unnest(search_aliases) alias WHERE alias = $1) 

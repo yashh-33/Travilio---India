@@ -116,21 +116,25 @@ export default function Hero({
         
         {/* Top Banner Toolbar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px', flexWrap: 'wrap', gap: '15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <img 
               src="/logo.png" 
               alt="Travilio Official Logo" 
               style={{ 
-                width: '80px', 
-                height: '80px', 
-                objectFit: 'contain'
+                width: '105px', 
+                height: '105px', 
+                objectFit: 'contain',
+                display: 'block',
+                transform: 'translateY(6px)'
               }} 
             />
-            <div>
-              <h1 style={{ fontSize: '2.4rem', fontWeight: '800', background: 'linear-gradient(135deg, var(--primary), var(--accent-gold))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <h1 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0', padding: '0', lineHeight: '1.1', background: 'linear-gradient(135deg, var(--primary), var(--accent-gold))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 Travilio
               </h1>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600' }}>Smart Indian Route &amp; Budget Architect</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', margin: '4px 0 0 0', padding: '0', lineHeight: '1.2' }}>
+                Smart Indian Route &amp; Budget Architect
+              </p>
             </div>
           </div>
 

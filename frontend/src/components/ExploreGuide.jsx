@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Hotel, Compass, Utensils, Activity, Star, IndianRupee, Heart, Flame, ArrowUpRight } from 'lucide-react';
+import ImageLoader from './ImageLoader.jsx';
 
 export default function ExploreGuide({ destination, budget, duration, favorites, setFavorites }) {
   const [subTab, setSubTab] = useState('hotels');
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
 
   if (!destination) {
     return (
@@ -40,20 +42,88 @@ export default function ExploreGuide({ destination, budget, duration, favorites,
     return favorites.some(f => f.id === itemId);
   };
 
-  // Dynamic Hotel Redirect Url
   const getHotelBookingUrl = (hotelName) => {
     return `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(hotelName)}`;
   };
 
-  // Dynamic Restaurant Redirect Url
   const getRestaurantBookingUrl = (restaurantName) => {
     return `https://www.tripadvisor.in/Search?q=${encodeURIComponent(restaurantName)}`;
   };
 
+  const galleryImages = destination.images && destination.images.length > 0
+    ? destination.images
+    : [{ url: destination.image, title: destination.name, source: "Unsplash", photographer: "Contributor" }];
+
   return (
     <div className="animate-slide" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Sub tabs */}
+      {/* 1. Stunning Destination Real Image Carousel */}
+      <div 
+        className="destination-gallery-carousel" 
+        style={{ 
+          position: 'relative', 
+          width: '100%', 
+          height: '340px', 
+          borderRadius: '16px', 
+          overflow: 'hidden', 
+          border: '1px solid var(--border-glow)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)'
+        }}
+      >
+        <ImageLoader 
+          src={galleryImages[activeImageIdx]?.url} 
+          alt={galleryImages[activeImageIdx]?.title} 
+          photographer={galleryImages[activeImageIdx]?.photographer}
+          source={galleryImages[activeImageIdx]?.source}
+          style={{ width: '100%', height: '100%' }}
+        />
+        
+        {/* Dark Overlay Text details */}
+        <div 
+          style={{ 
+            position: 'absolute', 
+            bottom: 0, 
+            left: 0, 
+            width: '100%', 
+            padding: '24px 20px 15px 20px', 
+            background: 'linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.4) 70%, transparent 100%)',
+            zIndex: 3,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end'
+          }}
+        >
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--accent-cyan)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Real Photo Gallery
+            </span>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'white', marginTop: '4px' }}>
+              {galleryImages[activeImageIdx]?.title || `${destination.name} - ${destination.state}`}
+            </h3>
+          </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {galleryImages.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveImageIdx(idx)}
+                style={{
+                  width: activeImageIdx === idx ? '20px' : '8px',
+                  height: '8px',
+                  borderRadius: '4px',
+                  background: activeImageIdx === idx ? 'var(--primary)' : 'rgba(255,255,255,0.4)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'all 0.2s ease-in-out'
+                }}
+                title={`View image ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Sub tabs navigation */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-glow)', paddingBottom: '8px', overflowX: 'auto' }} className="no-print">
         {[
           { id: 'hotels', name: 'Nearby Stays', icon: Hotel },
@@ -135,7 +205,6 @@ export default function ExploreGuide({ destination, budget, duration, favorites,
                         </div>
                       </div>
                       
-                      {/* Booking link */}
                       <a 
                         href={getHotelBookingUrl(hotel.name)}
                         target="_blank"
@@ -169,10 +238,10 @@ export default function ExploreGuide({ destination, budget, duration, favorites,
             {destination.attractions.map((spot, i) => {
               const isFav = isFavorite(spot.name, 'spot');
               return (
-                <div key={i} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div key={i} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <h4 style={{ fontSize: '1.1rem', fontWeight: '700' }}>{spot.name}</h4>
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: '700' }}>{spot.name}</h4>
                       <button 
                         onClick={() => toggleFavorite(spot, 'spot')}
                         style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: isFav ? 'var(--accent-rose)' : 'var(--text-muted)' }}
@@ -180,14 +249,41 @@ export default function ExploreGuide({ destination, budget, duration, favorites,
                         <Heart size={18} fill={isFav ? 'currentColor' : 'none'} />
                       </button>
                     </div>
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
-                      <span className="badge badge-cyan" style={{ fontSize: '0.65rem' }}>{spot.duration}h Visit</span>
-                      <span className="badge badge-blue" style={{ fontSize: '0.65rem' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                      <span className="badge badge-cyan" style={{ fontSize: '0.62rem' }}>{spot.category || 'Sightseeing'}</span>
+                      <span className="badge badge-blue" style={{ fontSize: '0.62rem' }}>{spot.duration || '2'}h Visit</span>
+                      <span className="badge badge-gold" style={{ fontSize: '0.62rem' }}>
                         {spot.entryFee === 0 ? 'Free Entry' : `Entry: ₹${spot.entryFee}`}
                       </span>
                     </div>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{spot.description}</p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', marginBottom: '14px' }}>{spot.description}</p>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '16px' }}>
+                      <span>⏰ Timings: {spot.timings || '9:00 AM - 6:00 PM'}</span>
+                      <span>📅 Best Time: {spot.bestTime || 'October to March'}</span>
+                    </div>
                   </div>
+                  {spot.googleMapsUrl && (
+                    <a
+                      href={spot.googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="nav-tab no-print"
+                      style={{
+                        background: 'var(--bg-tertiary)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border-glow)',
+                        justifyContent: 'center',
+                        padding: '8px',
+                        fontSize: '0.78rem',
+                        fontWeight: '700',
+                        borderRadius: '6px',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      View on Google Maps
+                      <ArrowUpRight size={14} style={{ marginLeft: '4px' }} />
+                    </a>
+                  )}
                 </div>
               );
             })}
@@ -200,10 +296,10 @@ export default function ExploreGuide({ destination, budget, duration, favorites,
             {destination.dining.map((food, i) => {
               const isFav = isFavorite(food.name, 'dining');
               return (
-                <div key={i} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div key={i} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <h4 style={{ fontSize: '1.1rem', fontWeight: '700' }}>{food.name}</h4>
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: '700' }}>{food.name}</h4>
                       <button 
                         onClick={() => toggleFavorite(food, 'dining')}
                         style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: isFav ? 'var(--accent-rose)' : 'var(--text-muted)' }}
@@ -211,22 +307,21 @@ export default function ExploreGuide({ destination, budget, duration, favorites,
                         <Heart size={18} fill={isFav ? 'currentColor' : 'none'} />
                       </button>
                     </div>
-                    <span className={`badge ${food.type === 'Fine Dining' ? 'badge-rose' : food.type === 'Mid-Range' ? 'badge-blue' : 'badge-gold'}`} style={{ fontSize: '0.65rem', marginBottom: '12px' }}>
+                    <span className={`badge ${food.type === 'Fine Dining' ? 'badge-rose' : food.type === 'Mid-Range' ? 'badge-blue' : 'badge-gold'}`} style={{ fontSize: '0.62rem', marginBottom: '10px', display: 'inline-block' }}>
                       {food.type}
                     </span>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600', marginBottom: '15px' }}>
-                      Specialty: {food.specialty}
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                      <strong>Specialty:</strong> {food.specialty}
                     </p>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '16px' }}>{food.description}</p>
                   </div>
-                  <div style={{ borderTop: '1px solid var(--border-glow)', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ borderTop: '1px solid var(--border-glow)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Avg Cost (for 2):</span>
-                      <span style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--success)', display: 'flex', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Avg Cost (for 2):</span>
+                      <span style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--success)', display: 'flex', alignItems: 'center' }}>
                         <IndianRupee size={14} />{food.cost}
                       </span>
                     </div>
-
-                    {/* Table Booking Redirect */}
                     <a 
                       href={getRestaurantBookingUrl(food.name)}
                       target="_blank"
@@ -238,7 +333,7 @@ export default function ExploreGuide({ destination, budget, duration, favorites,
                         border: '1px solid var(--border-glow)',
                         justifyContent: 'center',
                         padding: '8px',
-                        fontSize: '0.8rem',
+                        fontSize: '0.78rem',
                         fontWeight: '700',
                         borderRadius: '6px',
                         textDecoration: 'none'

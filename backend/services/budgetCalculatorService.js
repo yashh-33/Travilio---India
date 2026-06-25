@@ -1,18 +1,4 @@
-/**
- * Service to calculate estimated costs for transit, hotel, food, and activities.
- * Can incorporate layover and connection fees for non-hub starting cities.
- */
-
-// Hub departure nodes
-const HUBS = ['delhi', 'mumbai', 'bengaluru', 'kolkata'];
-
-// Connection/Layover fees from non-hub starting cities
-const CONNECTION_FEES = {
-  flight: 2500,
-  train: 350,
-  bus: 250,
-  cab: 4500
-};
+import { calculateTravelDetails } from '../utils/travelEngine.js';
 
 /**
  * Calculates the total cost breakdown for a planned trip
@@ -23,52 +9,35 @@ const CONNECTION_FEES = {
  * @param {string} transportMode - 'flight', 'train', 'bus', or 'cab'
  */
 export const calculateBudgetBreakdown = (destination, originCity, budgetTier, duration, transportMode) => {
-  const origin = (originCity || 'delhi').toLowerCase().trim();
+  const origin = (originCity || 'delhi').trim();
   const tier = budgetTier === 'midRange' ? 'midRange' : budgetTier === 'luxury' ? 'luxury' : 'budget';
   const transport = (transportMode || 'train').toLowerCase().trim();
 
-  // 1. Determine starting hub for routes lookup
-  let startingHub = 'delhi';
-  let layoverFee = 0;
-
-  if (HUBS.includes(origin)) {
-    startingHub = origin;
-  } else {
-    // Non-hub origin: default to nearest hub (e.g. Mumbai for Pune, Delhi for Jaipur/Nagpur) and apply connection fee
-    layoverFee = CONNECTION_FEES[transport] || 0;
-    if (['pune', 'nagpur', 'goa', 'ahmedabad'].includes(origin)) {
-      startingHub = 'mumbai';
-    } else if (['patna', 'guwahati', 'bhubaneswar'].includes(origin)) {
-      startingHub = 'kolkata';
-    } else if (['chennai', 'hyderabad', 'kochi'].includes(origin)) {
-      startingHub = 'bengaluru';
-    }
+  // 1. Calculate dynamic travel details directly from origin city to destination city
+  let transportCost = 1000;
+  try {
+    const travelDetails = calculateTravelDetails(origin, '', destination.name, destination.state);
+    const modeData = travelDetails[transport] || travelDetails['train'];
+    transportCost = modeData.price || 1000;
+  } catch (err) {
+    transportCost = transport === 'flight' ? 5000 : transport === 'train' ? 900 : transport === 'bus' ? 1200 : 15000;
   }
 
-  // 2. Transport cost
-  const routeData = destination.routes?.[startingHub]?.[transport];
-  const baseTransportCost = routeData?.price || 1000;
-  const transportCost = baseTransportCost + layoverFee;
-
-  // 3. Hotel cost
-  const hotelPrice = destination.hotels?.[tier]?.price || (tier === 'luxury' ? 8000 : tier === 'midRange' ? 2500 : 600);
+  // 2. Hotel cost (lodging)
+  const hotelPrice = tier === 'luxury' ? 12000 : tier === 'midRange' ? 3000 : 800;
   const lodgingCost = hotelPrice * Math.max(1, duration - 1); // hotel nights = days - 1
 
-  // 4. Food cost
-  // Find typical cost in dining array or default
-  const diningTierType = tier === 'luxury' ? 'Fine Dining' : tier === 'midRange' ? 'Mid-Range' : 'Street Food';
-  const diningItem = destination.dining?.find(d => d.type === diningTierType) || { cost: tier === 'luxury' ? 1200 : tier === 'midRange' ? 500 : 150 };
-  const foodCostPerDay = diningItem.cost;
+  // 3. Food cost
+  const foodCostPerDay = tier === 'luxury' ? 2000 : tier === 'midRange' ? 700 : 250;
   const foodCost = foodCostPerDay * duration;
 
-  // 5. Activities & Sightseeing cost
+  // 4. Activities & Sightseeing cost
   let activitiesCost = 0;
   if (destination.attractions && destination.attractions.length > 0) {
     // Sum entry fees of first 3 attractions
     activitiesCost += destination.attractions.slice(0, 3).reduce((sum, item) => sum + (item.entryFee || 0), 0);
   }
   if (destination.adventures && destination.adventures.length > 0) {
-    // Add cost of the cheapest adventure for budget, mid-range for midRange, or premium for luxury
     const sortedAdventures = [...destination.adventures].sort((a, b) => a.cost - b.cost);
     if (tier === 'luxury' && sortedAdventures.length > 0) {
       activitiesCost += sortedAdventures[sortedAdventures.length - 1].cost;
@@ -79,15 +48,28 @@ export const calculateBudgetBreakdown = (destination, originCity, budgetTier, du
     }
   }
 
-  const totalCost = transportCost + lodgingCost + foodCost + activitiesCost;
+  // 5. Shopping cost
+  const shoppingCostPerDay = tier === 'luxury' ? 2000 : tier === 'midRange' ? 400 : 100;
+  const shoppingCost = shoppingCostPerDay * duration;
+
+  // 6. Local Transport cost
+  const localTransportCostPerDay = tier === 'luxury' ? 1500 : tier === 'midRange' ? 500 : 150;
+  const localTransportCost = localTransportCostPerDay * duration;
+
+  // 7. Miscellaneous cost
+  const miscCostPerDay = tier === 'luxury' ? 1000 : tier === 'midRange' ? 300 : 100;
+  const miscCost = miscCostPerDay * duration;
+
+  const totalCost = transportCost + lodgingCost + foodCost + activitiesCost + shoppingCost + localTransportCost + miscCost;
 
   return {
     transportCost,
     lodgingCost,
     foodCost,
     activitiesCost,
-    layoverFee,
-    startingHub,
+    shoppingCost,
+    localTransportCost,
+    miscCost,
     totalCost
   };
 };
